@@ -77,7 +77,7 @@ int main(void) {
     GRASP(matriz, solucao_inicial, solucao_final, alfa);
     printf("\n\nSolucao final GRASP: ");
     printCaminho(solucao_final);
-    printf("\n\nCusto solucao final: %.2f",calculaCusto(matriz, solucao_final));
+    printf("Custo solucao final: %.2f",calculaCusto(matriz, solucao_final));
 
 
     return 0;
@@ -121,7 +121,7 @@ void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final, int 
     printf("\n\nSolução após VDN: ");
     printCaminho(solucao_temp);
     custoGuloso = calculaCusto(m, solucao_temp);
-    printf("Custo solução inicial gulosa: %.2f\n", custoGuloso);
+    printf("Custo solução após VDN: %.2f\n", custoFinal);
 }
 
 void gerarLCR(int* entrada, int a, int* saida){
@@ -132,7 +132,7 @@ void gerarLCR(int* entrada, int a, int* saida){
     for(int i = 0; i < nElementos; i++){
       inseridos[i] = 0;
     }
-    
+
     //adiciona os k primeiros elementos a solucao na ordem
     for(int i = 0; i < k; ++i){
         saida[i] = entrada[i];
