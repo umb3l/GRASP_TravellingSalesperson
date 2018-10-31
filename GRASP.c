@@ -3,8 +3,6 @@
 #include <math.h>
 
 #define INT_MAX 2000;
-#define TRUE 1;
-#define FALSE 0;
 
 int nElementos = 0;
 
@@ -14,6 +12,7 @@ struct cidade {
     float custo;
 };
 
+//Declaração das funções
 float distancia(struct cidade a, struct cidade b);
 void printCaminho(int *caminho);
 void construcaoGulosa(float m[][nElementos], int* solucao_inicial);
@@ -21,24 +20,25 @@ void construcaoAleatoria(float m[][nElementos], int* caminho);
 void copiaCaminho(int* origem, int* destino);
 float calculaCusto(float m[][nElementos], int* caminho);
 void swap(float m[][nElementos], int* solucao_inicial, int* melhor_vizinho);
-void twoOpt(float m[][nElementos], int* solucao_inicial, float custo_solucao_inicial, int* melhor_vizinho);
+void twoOpt(float m[][nElementos], int* solucao_inicial, float melhor_custo, int* melhor_vizinho);
+void twoOptSwap(int* entrada, int i, int k, int* saida);
 void VND(float m[][nElementos], float custo_melhor_vizinho, int* melhor_vizinho, int* otimo_local);
+void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final);
 
 int main(void) {
 
       int t;
 
-      FILE* fp = fopen("dijbouti.txt", "r");
+      //FILE* fp = fopen("dijbouti.txt", "r");
       //FILE* fp = fopen("bcl380.txt", "r");
       //FILE* fp = fopen("western sahara.txt", "r");
-      //FILE* fp = fopen("dijbouti.txt", "r");
-      //FILE* fp = fopen("dijbouti.txt", "r");
-      //FILE* fp = fopen("dijbouti.txt", "r");
-      //FILE* fp = fopen("dijbouti.txt", "r");
-      //FILE* fp = fopen("dijbouti.txt", "r");
-      //FILE* fp = fopen("dijbouti.txt", "r");
-      //FILE* fp = fopen("dijbouti.txt", "r");
-      //FILE* fp = fopen("dijbouti.txt", "r");
+      //FILE* fp = fopen("xqg237.txt", "r");
+      FILE* fp = fopen("zimbabwe.txt", "r");
+      //FILE* fp = fopen("pka379.txt", "r");
+      //FILE* fp = fopen("qatar.txt", "r");
+      //FILE* fp = fopen("uruguay.txt", "r");
+      //FILE* fp = fopen("xqg131.txt", "r");
+      //FILE* fp = fopen("pma343.txt", "r");
 
       //Lê numero de elementos
       fscanf(fp, "%d\n", &nElementos);  
@@ -51,7 +51,7 @@ int main(void) {
         fscanf(fp, "%f ", &t);
         fscanf(fp, "%f ", &cidades[i].px);
         fscanf(fp, "%f \n", &cidades[i].py);
-        printf("%d %.2f %.2f\n", i+1, cidades[i].px, cidades[i].py); 
+        //printf("%d %.2f %.2f\n", i+1, cidades[i].px, cidades[i].py); 
       }
 
       fclose(fp);
@@ -61,54 +61,65 @@ int main(void) {
       //Calcula distância entre cidades, armazena em matriz[][] e imprime matriz
       float matriz[nElementos][nElementos];
 
-      printf("Matriz gerada:\n");
+      //printf("Matriz gerada:\n");
 
       for(int i = 0; i < nElementos; i++) {
           for(int j = 0; j < nElementos; j++) {
               matriz[i][j] = distancia(cidades[i], cidades[j]);
-              printf("%.2f ", matriz[i][j]);
+              //printf("%.2f ", matriz[i][j]);
           }
     }
 
     //Cria solucao gulosa inicial 
     int solucao_inicial[nElementos + 1];
-
-    construcaoGulosa(matriz, solucao_inicial);
-    printf("\n\nSolucao inicial gulosa: ");
-    printCaminho(solucao_inicial);
-    printf("Custo solução inicial gulosa: %d\n", calculaCusto(matriz, solucao_inicial));
-
-    //Cria melhor vizinho a partir da solucao inicial com movimento de swap
-    int melhor_vizinho[nElementos];
+    int solucao_final[nElementos + 1];
     
-    printf("\n\nSolucao melhor vizinho (swap): ");
-    swap(matriz, solucao_inicial, melhor_vizinho);
-    printCaminho(melhor_vizinho);
+    GRASP(matriz, solucao_inicial, solucao_final);
+    printf("\n\nSolucao final GRASP: ");
+    printCaminho(solucao_final);
+    printf("\n\nCusto solucao final: %.2f",calculaCusto(matriz, solucao_final));
 
-    float custo_melhor_vizinho = calculaCusto(matriz, melhor_vizinho);
-    printf("Custo solução melhor vizinho: %d\n", custo_melhor_vizinho);
-
-    /*Cria caminho aleatorio e cria solucao com movimento de 2-opt
-    printf("\n\nSolucao melhor vizinho (2-opt): ");
-    twoOpt(matriz, solucao_inicial, custo_solucao_inicial, melhor_vizinho);
-    
-    printf("Custo solução melhor vizinho: %d\n", calculaCusto(matriz, melhor_vizinho));
-    */
-
-    //Cria otimo local e calcula com o VND
-    int otimo_local[nElementos];
-    
-    VND(matriz, custo_melhor_vizinho, melhor_vizinho, otimo_local);
-    printf("Custo ótimo local: %d", calculaCusto(matriz, otimo_local));
 
     return 0;
 }
+void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final){
+	int improve = 0;
+	float custo_referencia = 100000;
+  int* solucao_temp[nElementos];
+	copiaCaminho(solucao_inicial, solucao_temp);
+	int* otimo_local[nElementos]
+	
+	while(improve < 20){
+		copiaCaminho(solucao_inicial, solucao_temp);
 
-void GRASP(){
-  
+		construcaoGulosa(matriz, solucao_inicial);
+
+    		VND(matriz, custo_melhor_vizinho, solucao_temp, otimo_local);
+			
+		float novoCusto = calculaCusto(m, otimo_local);
+
+		if(custo_referencia > novoCusto){
+			
+			custo_referencia = novoCusto;
+			solucao_final = otimo_local;
+			improve = 0;
+			
+		}
+			
+	improve++;
+	}
+
+	printf("\n\nSolucao inicial gulosa: ");
+  printCaminho(solucao_inicial);
+	printf("Custo solução inicial gulosa: %.2f\n", custoGuloso);
+
+
+	printf("\n\nSolucao ótimo local (VND): ");
+	printCaminho(otimo_local);
+	printf("Custo ótimo local: %.2f", novoCusto);
 }
 
-
+ 
 void construcaoGulosa(float m[][nElementos], int* solucao_inicial) {
     int *inseridos = malloc(nElementos * sizeof(int));
 
@@ -164,62 +175,71 @@ void swap(float m[][nElementos], int* solucao_inicial, int* melhor_vizinho) {
     }
 }
 
-/*void twoOpt(float m[][nElementos], int* caminho, float melhor, int* melhor_vizinho){
+void twoOpt(float m[][nElementos], int* solucao_inicial, float melhor_custo, int* melhor_vizinho){
     int improve = 0;
+    int* solucao_tmp = malloc((nElementos + 1) * sizeof(int));
+    
+    copiaCaminho(solucao_inicial, melhor_vizinho);
  
-    while(improve < 20){
+    while(improve < 5){
 
-        for(int i = 0; i < nElementos; i++ ){
+        for(int i = 1; i < nElementos; i++ ){
+          copiaCaminho(solucao_inicial, solucao_tmp);
             for(int k = 0; k < nElementos; k++){
-                TwoOptSwap(caminho, i, k);
- 
-                float novoCusto = calculaCusto(m, caminho);
+                if(i - k == 1){ continue;}
+                twoOptSwap(solucao_inicial, i, k, solucao_tmp);
 
-                if(novoCusto < melhor){
+                float novoCusto = calculaCusto(m, solucao_tmp);
+
+                if(novoCusto < melhor_custo){
                     improve = 0;
-                    melhor_vizinho = vizinho;
-                    melhor = novoCusto;
+                    copiaCaminho(solucao_tmp, melhor_vizinho);
+                    melhor_custo = novoCusto;
                 }
             }
         }
     
     improve ++;
-    }
-}*/
-
-/*
-current_tour:=create_random_initial_tour()
-repeat
-modified_tour:=apply_2opt_move(current_tour)
-if length(modified_tour) <length(current_tour)
-then current_tour:=modified_tour
-until no further improvement or a specified number of iterations
-
-2optSwap(route, i, k) {
-      1. take route[0] to route[i-1] and add them in order to new_route
-      2. take route[i] to route[k] and add them in reverse order to new_route
-      3. take route[k+1] to end and add them in order to new_route
-      return new_route;
   }
+}
 
+void twoOptSwap(int* entrada, int i, int k, int* saida){
+    // 1. take route[0] to route[i-1] and add them in order to new_route
+    for(int c = 0; c <= i - 1; ++c ){
+        saida[c] = entrada[c];
+    }
+         
+    // 2. take route[i] to route[k] and add them in reverse order to new_route
+    int dec = 0;
+    for ( int c = i; c <= k; ++c){
+        saida[c] = entrada[k - dec];
+        dec++;
+    }
+ 
+    // 3. take route[k+1] to end and add them in order to new_route
+    for ( int c = k + 1; c < nElementos; ++c ){
+        saida[c] = entrada[c];
+    }
+}
 
-*/
 void VND(float m[][nElementos], float custo_melhor_vizinho, int* melhor_vizinho, int* otimo_local){
     int improve = 0;
-    float novoCusto;
 
-    while(improve < 20){
+    while(improve < 5){
         swap(m, melhor_vizinho, otimo_local);
+        twoOpt(m, otimo_local, custo_melhor_vizinho, otimo_local);
+        swap(m, otimo_local, otimo_local);
 
-        novoCusto = calculaCusto(m, melhor_vizinho);
+        float novoCusto = calculaCusto(m, otimo_local);
 
-        if(novoCusto < custo_melhor_vizinho){
-            otimo_local = melhor_vizinho;
+        if(novoCusto > custo_melhor_vizinho){
+            copiaCaminho(melhor_vizinho, otimo_local);
             novoCusto = custo_melhor_vizinho;
+            printf("%.2f\n", novoCusto);
             improve = 1;
+        } else { 
+          improve ++;
         }
-
-    improve ++;
     }
 }
 
@@ -240,11 +260,12 @@ void copiaCaminho(int* origem, int* destino){
     }
 }
 
-float calculaCusto(float m[][nElementos], int* caminho){
+float calculaCusto(float m[][nElementos], int* caminho) {
     float custo = 0;
 
     for(int i = 0; i < nElementos; i++) {
-        custo += m[caminho[i]][caminho[i + 1]];
+        custo += m[caminho[i+ 1]][caminho[i]];
     }
+
     return custo;
 }
