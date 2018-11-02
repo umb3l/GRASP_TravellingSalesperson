@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdbool.h>
+#include <time.h>
 
 #define INT_MAX 200000;
 
@@ -22,12 +24,15 @@ void swap(float m[][nElementos], int* solucao_inicial, int* melhor_vizinho);
 void twoOpt(float m[][nElementos], int* solucao_inicial, float melhor_custo, int* melhor_vizinho);
 void twoOptSwap(int* entrada, int i, int k, int* saida);
 void VND(float m[][nElementos], float custo_melhor_vizinho, int* melhor_vizinho, int* otimo_local);
-void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final, int alfa);
-void gerarLCR(int* entrada, int a, int* saida);
+void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final, float alfa);
+void gerarLCR(int* entrada, int a, int* saida,float m[][nElementos]);
+bool isvalueinarray(int val, int *arr, int size);
 
 int main(void) {
     int t;
-    int alfa = 2;
+    float alfa = 0.2;
+    time_t w;
+    srand((unsigned) time(&w));
 
     //FILE* fp = fopen("dijbouti.txt", "r");
     //FILE* fp = fopen("bcl380.txt", "r");
@@ -83,7 +88,7 @@ int main(void) {
     return 0;
 }
 
-void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final, int alfa){
+void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final, float alfa){
     int improve = 0;
     int solucao_temp[nElementos];
     int otimo_local[nElementos];
@@ -93,8 +98,8 @@ void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final, int 
         copiaCaminho(solucao_temp, solucao_inicial);
         
         construcaoGulosa(m, solucao_temp);
-        //pegar x candidatos da lista gulosa e o resto aleatorio;
-        gerarLCR(solucao_temp, alfa, solucao_temp);
+      
+        gerarLCR(solucao_temp, alfa, solucao_temp,m);
         
         custoGuloso = calculaCusto(m, solucao_temp);
         printf("LCR: ");
@@ -124,33 +129,36 @@ void GRASP(float m[][nElementos], int* solucao_inicial, int* solucao_final, int 
     printf("Custo solução após VDN: %.2f\n", custoFinal);
 }
 
-void gerarLCR(int* entrada, int a, int* saida){
-    int k =  nElementos / a;
+void gerarLCR(int* entrada, int a, int* saida,float m[][nElementos]){
+    int k =  nElementos * a;
     int inseridos[nElementos];
     int count = 0;
+    int LCR[k];
 
     for(int i = 0; i < nElementos; i++){
       inseridos[i] = 0;
     }
-
-    //adiciona os k primeiros elementos a solucao na ordem
-    for(int i = 0; i < k; ++i){
-        saida[i] = entrada[i];
-        inseridos[i] = 1;
-    }
+    saida[0] = entrada[0];
 
     //randomiza os elementos de k ao fim;
-    for(int i = k ; i < nElementos; i++){
-        int n = rand() % nElementos; 
+    for(int i = 1 ; i < nElementos; i++){
         
-        if(n >= k && !inseridos[n]){
-            saida[i] = entrada[n];
+        construcaoGulosa(m, entrada);
+        k = nElementos-i;
+        for(int i = 0; i < k; ++i){
+          LCR[i] = entrada[i];
+        }
+
+        int n = rand() % k; 
+        bool inserido = isvalueinarray(n, saida, nElementos);
+        if(inserido==false){
+            saida[i] = LCR[n];
             inseridos[n] = 1;
             count++;
         }
     }
 }
- 
+
 void construcaoGulosa(float m[][nElementos], int* solucao_inicial) {
     int *inseridos = malloc(nElementos * sizeof(int));
 
@@ -158,7 +166,7 @@ void construcaoGulosa(float m[][nElementos], int* solucao_inicial) {
         inseridos[i] = 0;
     }
 
-    solucao_inicial[0] = 0;
+    solucao_inicial[0] = rand() % (nElementos-1);
     inseridos[0] = 1;
 
     for(int i = 0; i < nElementos; i++) {
@@ -166,17 +174,19 @@ void construcaoGulosa(float m[][nElementos], int* solucao_inicial) {
         int vizinho_selecionado = 0;
 
         for(int j = 0; j < nElementos; j++) {
-            if(!inseridos[j] && valor_referencia > m[i][j]) {
+            bool inserido = isvalueinarray(j, solucao_inicial, nElementos);
+            if((inserido==false) && (valor_referencia > m[i][j])) {
+                //printf("entrou aqui, %d",j);
                 vizinho_selecionado = j;
                 valor_referencia = m[i][j];
+                solucao_inicial[i + 1] = vizinho_selecionado;
+                inseridos[vizinho_selecionado] = 1;
             }
         }
 
-        solucao_inicial[i + 1] = vizinho_selecionado;
-        inseridos[vizinho_selecionado] = 1;
     }
 
-    solucao_inicial[nElementos] = 0;
+    solucao_inicial[nElementos] = solucao_inicial[0];
 
     free(inseridos);
 }
@@ -216,7 +226,7 @@ void twoOpt(float m[][nElementos], int* solucao_inicial, float melhor_custo, int
 
         for(int i = 1; i < nElementos; i++ ){
           copiaCaminho(solucao_inicial, solucao_tmp);
-            for(int k = 0; k < nElementos; k++){
+            for(int k = i+1; k < nElementos; k++){
                 if(i - k == 1){ continue;}
                 twoOptSwap(solucao_inicial, i, k, solucao_tmp);
 
@@ -256,11 +266,18 @@ void twoOptSwap(int* entrada, int i, int k, int* saida){
 void VND(float m[][nElementos], float custo_melhor_vizinho, int* melhor_vizinho, int* otimo_local){
     int improve = 0;
     int custoVND;
+    int r = 2;
 
-    while(improve < 5){
-        swap(m, melhor_vizinho, otimo_local);
-        twoOpt(m, otimo_local, custo_melhor_vizinho, otimo_local);
-        swap(m, otimo_local, otimo_local);
+    while(improve < r){
+        if (improve==0){
+          swap(m, melhor_vizinho, otimo_local);
+        } 
+
+        if (improve==1) {
+          twoOpt(m, otimo_local, custo_melhor_vizinho, otimo_local);
+        } 
+        
+        //swap(m, otimo_local, otimo_local);
 
         float novoCusto = calculaCusto(m, otimo_local);
 
@@ -268,7 +285,7 @@ void VND(float m[][nElementos], float custo_melhor_vizinho, int* melhor_vizinho,
             copiaCaminho(melhor_vizinho, otimo_local);
             novoCusto = custo_melhor_vizinho;
             printf("%.2f\n", novoCusto);
-            improve = 1;
+            improve = 0;
         } else { 
           improve ++;
         }
@@ -300,4 +317,13 @@ float calculaCusto(float m[][nElementos], int* caminho) {
     }
 
     return custo;
+}
+
+bool isvalueinarray(int val, int *arr, int size){
+    int i;
+    for (i=0; i < size; i++) {
+        if (arr[i] == val)
+            return true;
+    }
+    return false;
 }
